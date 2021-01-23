@@ -59,4 +59,3 @@ fn camera_movement(
         transform.translation += time.delta_seconds() * direction * 1000.;
     }
 }
-
