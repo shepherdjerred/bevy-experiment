@@ -1,43 +1,62 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, render::camera::Camera};
+use bevy_tiled_prototype::TiledMapCenter;
 
 fn main() {
     App::build()
         .add_plugins(DefaultPlugins)
-        .add_plugin(HelloPlugin)
+        .add_plugin(bevy_tiled_prototype::TiledMapPlugin)
+        .add_startup_system(setup.system())
+        .add_system(camera_movement.system())
         .run();
 }
 
-struct Person;
-struct Name(String);
-struct GreetTimer(Timer);
-
-fn add_people(commands: &mut Commands) {
+fn setup(commands: &mut Commands, asset_server: Res<AssetServer>) {
     commands
-        .spawn((Person, Name("Elaina Proctor".to_string())))
-        .spawn((Person, Name("Renzo Hume".to_string())))
-        .spawn((Person, Name("Zayna Nieves".to_string())));
+        .spawn(bevy_tiled_prototype::TiledMapComponents {
+            map_asset: asset_server.load("timefantasy/winter/tiles/map.tmx"),
+            center: TiledMapCenter(true),
+            origin: Transform::from_scale(Vec3::new(4.0, 4.0, 1.0)),
+            ..Default::default()
+        })
+        .spawn(Camera2dBundle::default());
 }
 
-fn greet_people(
-    time: Res<Time>, mut timer: ResMut<GreetTimer>, query: Query<&Name, With<Person>>) {
-    // update our timer with the time elapsed since the last update
-    // if the timer hasn't finished yet, we return
-    if !timer.0.tick(time.delta_seconds()).just_finished() {
-        return;
-    }
+fn camera_movement(
+    time: Res<Time>,
+    keyboard_input: Res<Input<KeyCode>>,
+    mut query: Query<(&Camera, &mut Transform)>,
+) {
+    for (_, mut transform) in query.iter_mut() {
+        let mut direction = Vec3::zero();
+        let scale = transform.scale.x;
 
-    for name in query.iter() {
-        println!("hello {}!", name.0);
+        if keyboard_input.pressed(KeyCode::A) {
+            direction -= Vec3::new(1.0, 0.0, 0.0);
+        }
+
+        if keyboard_input.pressed(KeyCode::D) {
+            direction += Vec3::new(1.0, 0.0, 0.0);
+        }
+
+        if keyboard_input.pressed(KeyCode::W) {
+            direction += Vec3::new(0.0, 1.0, 0.0);
+        }
+
+        if keyboard_input.pressed(KeyCode::S) {
+            direction -= Vec3::new(0.0, 1.0, 0.0);
+        }
+
+        if keyboard_input.pressed(KeyCode::Z) {
+            let scale = scale + 0.1;
+            transform.scale = Vec3::new(scale, scale, scale);
+        }
+
+        if keyboard_input.pressed(KeyCode::X) && scale > 1.1 {
+            let scale = scale - 0.1;
+            transform.scale = Vec3::new(scale, scale, scale);
+        }
+
+        transform.translation += time.delta_seconds() * direction * 1000.;
     }
 }
 
-pub struct HelloPlugin;
-
-impl Plugin for HelloPlugin {
-    fn build(&self, app: &mut AppBuilder) {
-        // the reason we call from_seconds with the true flag is to make the timer repeat itself
-        app.add_resource(GreetTimer(Timer::from_seconds(2.0, true)))
-            .add_startup_system(add_people.system())
-            .add_system(greet_people.system());
-    }
-}
