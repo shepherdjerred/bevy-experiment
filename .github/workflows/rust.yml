@@ -17,7 +17,7 @@ jobs:
     - name: Update apt
       run: sudo apt-get update
     - name: Install dependencies
-      run: sudo apt-get install libasound2-dev libudev-dev
+      run: sudo apt-get install libasound2-dev libudev-dev zip
     - name: Install latest nightly
       uses: actions-rs/toolchain@v1
       with:
@@ -30,16 +30,22 @@ jobs:
     - name: Check
       run: cargo +nightly fmt -- --check
     - name: Build
-      run: cargo build --verbose
+      run: cargo build --verbose --release
     - name: Run tests
       run: cargo test --verbose
+    - run:
+        name: zip assets
+        run: zip -r assets.zip assets/
     - uses: actions/upload-artifact@v2
       with:
         name: artifacts
-        path: target/
+        path: |
+          assets.zip
+          target/release/bevy-experiment
     - uses: eine/tip@master
       with:
         tag: continous-integration
         token: ${{ secrets.ACCESS_TOKEN }}
         files: |
-          target/
+          assets.zip
+          target/release/bevy-experiment

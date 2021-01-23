@@ -15,7 +15,7 @@ fn setup(commands: &mut Commands, asset_server: Res<AssetServer>) {
         .spawn(bevy_tiled_prototype::TiledMapComponents {
             map_asset: asset_server.load("timefantasy/winter/tiles/map.tmx"),
             center: TiledMapCenter(true),
-            origin: Transform::from_scale(Vec3::new(4.0, 4.0, 1.0)),
+            origin: Transform::from_scale(Vec3::new(1.0, 1.0, 1.0)),
             ..Default::default()
         })
         .spawn(Camera2dBundle::default());
